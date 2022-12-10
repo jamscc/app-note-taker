@@ -50,11 +50,46 @@ async function postDataDB(req, res) {
     }
 }
 
+// for DELETE
+async function deleteDataDB(req, res) {
+    try {
+        // read and parse
+        const notesEntries = forReadData(await fsP.readFile(dbPH));
+        // for the remaining data
+        let dataRemain = [];
+        // for deleted data
+        let dataDeleted = [];
+
+        const len = notesEntries.length;
+        for (let i = 0; i < len; i++) {
+            let equal = (notesEntries[i].id == req.params.id);
+            switch (true) {
+                case (equal):
+                    dataDeleted = [...dataDeleted, notesEntries[i]];
+                    break;
+                default:
+                    dataRemain = [...dataRemain, notesEntries[i]];
+            }
+        };
+        // write
+        fsP.writeFile(dbPH, forWriteData(dataRemain));
+        // deleted data
+        res.json({ dataDeleted });
+    }
+    catch {
+        const type = req.method;
+        res.json(`There was an error in connection with the ${type} request.`);
+    }
+}
+
 // get notes 
 notes.get('/', (req, res) => { getDataDB(req, res); });
 
 // post a note
 notes.post('/', (req, res) => { postDataDB(req, res); });
+
+// delete
+notes.delete('/:id', (req, res) => { deleteDataDB(req, res); });
 
 module.exports = notes;
 
